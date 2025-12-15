@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="436d5bca3b39ba90c6053121a3e45a38" label="helloworld001" max_length="40" name="x_snc_hello_001_helloworld001" type="collection">
+        <element attributes="edge_encryption_enabled=true" label="Number" max_length="40" name="number" type="string"/>
+        <element attributes="edge_encryption_enabled=true" label="Subject" max_length="1024" name="subject" type="string"/>
+    </element>
+</database>
