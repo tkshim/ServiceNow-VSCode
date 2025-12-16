@@ -1,0 +1,13 @@
+name: hello
+
+on:
+  workflow_dispatch:   # 手動実行ボタンが出る
+  push:
+    branches: [ "main" ]  # mainにpushされたら動く
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say hello
+        run: echo "Hello from GitHub Actions!"
