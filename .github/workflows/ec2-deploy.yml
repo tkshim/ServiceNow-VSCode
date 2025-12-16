@@ -18,7 +18,7 @@ jobs:
       - name: Launch EC2 instance
         run: |
           aws ec2 run-instances \
-            --image-id ami-0c2acfcb2ac4d02a0 \
+            --image-id ami-0c3fd0f5d33134a76 \
             --instance-type t2.micro \
             --key-name amazonlinux2 \
             --security-group-ids sg-04c3ba107fccafd1f \
