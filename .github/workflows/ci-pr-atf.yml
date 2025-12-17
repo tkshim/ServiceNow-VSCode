@@ -2,7 +2,7 @@ name: CI - PR ATF (Smoke)
 
 on:
   pull_request:
-    branches: [ main ]  # あなたの運用に合わせて main でもOK
+    branches: [ develop, main ]  # あなたの運用に合わせて main でもOK
 
 concurrency:
   group: sn-ci
