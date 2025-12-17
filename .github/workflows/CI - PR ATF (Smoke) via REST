@@ -1,0 +1,122 @@
+name: CI - PR ATF (Smoke) via REST
+
+on:
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  atf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run ATF suite (sn_cicd API)
+        env:
+          SN_HOST: ${{ secrets.NOW_CI_INSTANCE_FQDN }}   # tshimmura002.service-now.com
+          SN_USER: ${{ secrets.NOW_USERNAME }}
+          SN_PASS: ${{ secrets.NOW_PASSWORD }}
+          SUITE_ID: ${{ secrets.ATF_SUITE_SYS_ID }}
+        run: |
+          set -euo pipefail
+
+          echo "Trigger ATF suite..."
+          # 起動（レスポンスはインスタンス/バージョンでJSON形が違うことがあるので丸ごと保存）
+          curl -sS -u "$SN_USER:$SN_PASS" \
+            -X POST "https://$SN_HOST/api/sn_cicd/testsuite/run?test_suite_sys_id=$SUITE_ID" \
+            -H "Accept: application/json" \
+            -o kickoff.json
+
+          cat kickoff.json
+
+          # 進捗ID / 結果ID を取り出す（パスが違っても対応できるように候補を複数）
+          PROGRESS_ID=$(python - <<'PY'
+          import json
+          d=json.load(open("kickoff.json"))
+          candidates=[
+            ("result","links","progress","id"),
+            ("result","links","progress_id"),
+            ("result","progress_id"),
+            ("links","progress","id"),
+            ("progress_id",),
+          ]
+          for c in candidates:
+            cur=d
+            ok=True
+            for k in c:
+              if isinstance(cur, dict) and k in cur:
+                cur=cur[k]
+              else:
+                ok=False; break
+            if ok and cur:
+              print(cur); raise SystemExit
+          raise SystemExit("Could not find progress_id in kickoff.json")
+          PY
+          )
+
+          RESULT_ID=$(python - <<'PY'
+          import json
+          d=json.load(open("kickoff.json"))
+          candidates=[
+            ("result","links","results","id"),
+            ("result","links","result","id"),
+            ("result","result_id"),
+            ("result_id",),
+          ]
+          for c in candidates:
+            cur=d
+            ok=True
+            for k in c:
+              if isinstance(cur, dict) and k in cur:
+                cur=cur[k]
+              else:
+                ok=False; break
+            if ok and cur:
+              print(cur); raise SystemExit
+          raise SystemExit("Could not find result_id in kickoff.json")
+          PY
+          )
+
+          echo "progress_id=$PROGRESS_ID"
+          echo "result_id=$RESULT_ID"
+
+          echo "Polling progress..."
+          for i in {1..60}; do
+            curl -sS -u "$SN_USER:$SN_PASS" \
+              "https://$SN_HOST/api/sn_cicd/progress/$PROGRESS_ID" \
+              -H "Accept: application/json" \
+              -o progress.json
+
+            # 状態表示（ここも環境で項目名が違うので、まず全体を出す）
+            STATE=$(python - <<'PY'
+            import json
+            d=json.load(open("progress.json"))
+            # ありがちなキーを順に探す
+            for k in ["state","status","result","progress","message"]:
+              if isinstance(d,dict) and k in d:
+                print(d[k]); break
+            else:
+              print("UNKNOWN")
+            PY
+            )
+            echo "[$i] $STATE"
+
+            # “完了っぽい”判定（必要ならログ見て調整）
+            if echo "$STATE" | grep -Ei "complete|completed|done|success|error|failed" >/dev/null; then
+              break
+            fi
+            sleep 10
+          done
+
+          echo "Fetch results..."
+          curl -sS -u "$SN_USER:$SN_PASS" \
+            "https://$SN_HOST/api/sn_cicd/testsuite/results/$RESULT_ID" \
+            -H "Accept: application/json" \
+            -o results.json
+
+          cat results.json
+
+          # “失敗っぽい”文字列があれば落とす（ここも結果JSONに合わせて最適化可能）
+          if grep -Ei '"(status|result)".*"(fail|failed|error)"' -n results.json; then
+            echo "ATF suite failed"
+            exit 1
+          fi
+
+          echo "ATF suite passed (or no failure detected)"
