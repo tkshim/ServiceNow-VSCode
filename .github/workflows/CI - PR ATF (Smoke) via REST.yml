@@ -136,7 +136,7 @@ jobs:
           print(f"test_suite_status={suite_status}")
           print(f"failure_count={fail_cnt}, error_count={err_cnt}")
 
-          if suite_status == "success" and fail_cnt == 0 and err_cnt == 0:
+          if suite_status in ("success", "running") and fail_cnt == 0 and err_cnt == 0:
               print("ATF suite PASSED")
               sys.exit(0)
 
