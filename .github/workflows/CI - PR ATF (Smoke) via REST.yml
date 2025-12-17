@@ -49,7 +49,6 @@ jobs:
           echo "=== Poll progress until results link appears ==="
           RESULT_ID=""
           STATUS_LABEL=""
-          STATUS_DETAIL=""
           ERROR_MSG=""
 
           # 最大 90 回 * 10 秒 = 900 秒（15分）待つ
@@ -59,19 +58,11 @@ jobs:
               -H "Accept: application/json" \
               -o progress.json
 
-            # ステータス系をログ表示（キーは環境により変わるので候補で拾う）
             STATUS_LABEL=$(python - <<'PY'
           import json
           d=json.load(open("progress.json"))
           r=d.get("result",{})
           print(r.get("status_label",""))
-          PY
-            )
-            STATUS_DETAIL=$(python - <<'PY'
-          import json
-          d=json.load(open("progress.json"))
-          r=d.get("result",{})
-          print(r.get("status_detail",""))
           PY
             )
             ERROR_MSG=$(python - <<'PY'
@@ -94,7 +85,7 @@ jobs:
 
             echo "[$i] status_label=${STATUS_LABEL:-} result_id=${RESULT_ID:-}"
 
-            # もし明確なエラーが出ていたら即失敗
+            # progress APIが明確なerrorを返したら即失敗
             if [ -n "${ERROR_MSG:-}" ]; then
               echo "Error returned by progress API: $ERROR_MSG"
               echo "=== progress.json ==="
@@ -108,7 +99,6 @@ jobs:
               break
             fi
 
-            # Pendingが続く場合もあるので待つ（必要なら sleep 秒を調整）
             sleep 10
           done
 
@@ -130,10 +120,26 @@ jobs:
           cat results.json
           echo
 
-          # まずは “失敗っぽい”文字列で検出（あなたのresults JSONに合わせて後で厳密化）
-          if grep -Ei '"(status|result|status_label)".*"(fail|failed|error)"' -n results.json; then
-            echo "ATF suite failed (detected failure markers in results.json)"
-            exit 1
-          fi
+          echo "=== Evaluate results.json strictly ==="
+          python - <<'PY'
+          import json, sys
 
-          echo "ATF suite passed (or no failure detected)"
+          d = json.load(open("results.json"))
+          r = d.get("result", {})
+
+          suite_status = (r.get("test_suite_status", "") or "").lower()
+          status_label = r.get("status_label", "")
+          fail_cnt = int(r.get("rolledup_test_failure_count", 0) or 0)
+          err_cnt  = int(r.get("rolledup_test_error_count", 0) or 0)
+
+          print(f"status_label={status_label}")
+          print(f"test_suite_status={suite_status}")
+          print(f"failure_count={fail_cnt}, error_count={err_cnt}")
+
+          if suite_status == "success" and fail_cnt == 0 and err_cnt == 0:
+              print("ATF suite PASSED")
+              sys.exit(0)
+
+          print("ATF suite FAILED")
+          sys.exit(1)
+          PY
