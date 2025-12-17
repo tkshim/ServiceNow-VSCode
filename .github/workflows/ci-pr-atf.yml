@@ -14,7 +14,7 @@ jobs:
     steps:
       # 1) PRブランチの変更をCIインスタンスへ反映
       - name: Apply changes from Source Control
-        uses: ServiceNow/sncicd-apply-changes@v1.0.0
+        uses: ServiceNow/sncicd-apply-changes@v1.0
         env:
           nowUsername: ${{ secrets.NOW_USERNAME }}
           nowPassword: ${{ secrets.NOW_PASSWORD }}
@@ -26,7 +26,7 @@ jobs:
 
       # 2) ATF Suiteを実行
       - name: Run ATF suite
-        uses: ServiceNow/sncicd-tests-run@v1.0.0
+        uses: ServiceNow/sncicd-tests-run@v1.0
         with:
           testSuiteSysId: ${{ secrets.ATF_SUITE_SYS_ID }}
         env:
