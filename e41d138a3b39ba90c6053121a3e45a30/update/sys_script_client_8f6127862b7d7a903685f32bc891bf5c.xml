@@ -21,7 +21,7 @@
     //alert('Hello First Name: ' + firstName + '\nLast Name: ' + lastName);
 
     // subjectフィールドに書き込む
-    var subjectValue = 'Hello World !!!' + firstName + ' ' + lastName + ',';
+    var subjectValue = 'Hello World' + firstName + ' ' + lastName + ',';
     g_form.setValue('subject', subjectValue);
 }]]></script>
         <sys_class_name>sys_script_client</sys_class_name>
@@ -30,7 +30,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>8f6127862b7d7a903685f32bc891bf5c</sys_id>
-        <sys_mod_count>21</sys_mod_count>
+        <sys_mod_count>22</sys_mod_count>
         <sys_name>hello_a01</sys_name>
         <sys_overrides/>
         <sys_package display_value="Hello World App" source="x_snc_hello_001">e41d138a3b39ba90c6053121a3e45a30</sys_package>
@@ -38,7 +38,7 @@
         <sys_scope display_value="Hello World App">e41d138a3b39ba90c6053121a3e45a30</sys_scope>
         <sys_update_name>sys_script_client_8f6127862b7d7a903685f32bc891bf5c</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2025-12-18 00:36:09</sys_updated_on>
+        <sys_updated_on>2025-12-18 00:44:23</sys_updated_on>
         <table>x_snc_hello_001_helloworld001</table>
         <type>onLoad</type>
         <ui_type>10</ui_type>
