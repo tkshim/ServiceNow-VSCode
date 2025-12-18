@@ -2,7 +2,7 @@ name: CI - PR ATF (Smoke) via REST
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ dev, main ]
 
 concurrency:
   group: sn-ci
